@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rick & Morty Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: #e6c9d6;
+    color: #16324f;
+    font-family: 'Poppins', Arial, sans-serif;
+    padding: 30px 15px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  h1 {
+    color: #2e40de;
+    font-size: 38px;
+    margin: 0 0 6px 0;
+  }
+
+  header p {
+    color: #3517e1;
+    margin: 0;
+    font-size: 16px;
+  }
+
+  .barra {
+    background: #a2a1a9;
+    border: 2px solid #4129df;
+    border-radius: 12px;
+    max-width: 900px;
+    margin: 0 auto 30px auto;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .barra button {
+    background: #eaf2fb;
+    color: #2e40de;
+    border: 2px solid #bcd9f5;
+    padding: 9px 20px;
+    border-radius: 15px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  .barra button.activo {
+    background: #2e40de;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 30px;
+    margin-right: 30px;
+    color: white;
+    border-color: #1d5fa8;
+  }
+
+  #inputBuscar {
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 2px solid #2e40de;
+    min-width: 200px;
+    font-size: 15px;
+  }
+
+  #botonBuscar {
+    padding: 9px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #2e40de;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  #mensaje {
+    text-align: center;
+    color: #1c5595;
+    margin-bottom: 20px;
+    font-size: 15px;
+  }
+
+  .contenedor {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+
+  .tarjeta {
+    background: rgb(244, 244, 245);
+    border: 2px solid #2e40de;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 3px 8px rgba(29, 95, 168, 0.08);
+  }
+
+  .tarjeta img {
+    width: 100%;
+    height: 210px;
+    object-fit: cover;
+    display: block;
+    border-bottom: 2px solid #cfe3f7;
+  }
+
+  .tarjeta-info {
+    padding: 15px;
+  }
+
+  .tarjeta-info h3 {
+    margin: 0 0 10px 0;
+    color: #16324f;
+  }
+
+  .tarjeta-info p {
+    margin: 5px 0;
+    color: #5a7fa6;
+    font-size: 14px;
+  }
+
+  .tarjeta-info p b {
+    color: #16324f;
+  }
+
+  .estado {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 4px 12px;
+    border-radius: 15px;
+    font-size: 13px;
+    font-weight: bold;
+    color: white;
+  }
+
+  .vivo {
+    background: #2e9e5b;
+  }
+
+  .muerto {
+    background: #d1594f;
+  }
+
+  .desconocido {
+    background: #e9e213;
+  }
+
+  .paginacion {
+    text-align: center;
+    margin-top: 30px;
+  }
+
+  .paginacion button {
+    background: rgb(63, 89, 124);
+    color: #f2f5f9;
+    border: 2px solid #bcd9f5;
+    padding: 8px 18px;
+    margin: 0 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .paginacion button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .paginacion span {
+    color: #0d4077;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <h1>Rick & Morty</h1>
+    <p>Revisa información relacionada con la serie</p>
+  </header>
+
+  <div class="barra">
+    <button id="btnPersonajes" class="activo" onclick="cambiarTipo('character')">Personajes</button>
+    <button id="btnUbicaciones" onclick="cambiarTipo('location')">Ubicaciones</button>
+    <button id="btnEpisodios" onclick="cambiarTipo('episode')">Episodios</button>
+    <input type="text" id="inputBuscar" placeholder="Buscar por nombre">
+    <button id="botonBuscar" onclick="buscar()">Buscar</button>
+  </div>
+
+  <p id="mensaje"></p>
+
+  <div class="contenedor" id="contenedor"></div>
+
+  <div class="paginacion" id="paginacion"></div>
+
+<script>
+
+  // variables que guardan en qué estamos parados
+  let tipoActual = "character";
+  let paginaActual = 1;
+  let textoBusqueda = "";
+
+  // cuando la página carga, mostramos los personajes
+  cargarDatos();
+
+  // esta función se llama cuando el usuario hace click en una pestaña
+  function cambiarTipo(tipo) {
+    tipoActual = tipo;
+    paginaActual = 1;
+    textoBusqueda = "";
+    document.getElementById("inputBuscar").value = "";
+
+    // quitamos la clase "activo" de todos los botones
+    document.getElementById("btnPersonajes").classList.remove("activo");
+    document.getElementById("btnUbicaciones").classList.remove("activo");
+    document.getElementById("btnEpisodios").classList.remove("activo");
+
+    // le ponemos la clase "activo" solo al botón que corresponde
+    if (tipo === "character") {
+      document.getElementById("btnPersonajes").classList.add("activo");
+    } else if (tipo === "location") {
+      document.getElementById("btnUbicaciones").classList.add("activo");
+    } else if (tipo === "episode") {
+      document.getElementById("btnEpisodios").classList.add("activo");
+    }
+
+    cargarDatos();
+  }
+
+  // esta función se llama cuando el usuario hace click en "Buscar"
+  function buscar() {
+    textoBusqueda = document.getElementById("inputBuscar").value;
+    paginaActual = 1;
+    cargarDatos();
+  }
+
+  // función principal: pide los datos a la API
+  function cargarDatos() {
+    const mensaje = document.getElementById("mensaje");
+    const contenedor = document.getElementById("contenedor");
+    const paginacion = document.getElementById("paginacion");
+
+    mensaje.innerHTML = "Cargando...";
+    contenedor.innerHTML = "";
+    paginacion.innerHTML = "";
+
+    // armamos la url de la petición
+    let url = "https://rickandmortyapi.com/api/" + tipoActual + "?page=" + paginaActual;
+
+    if (textoBusqueda !== "") {
+      url = url + "&name=" + textoBusqueda;
+    }
+
+    // hacemos la petición con fetch
+    fetch(url)
+      .then(function(respuesta) {
+        if (respuesta.status === 404) {
+          mensaje.innerHTML = "No se encontraron resultados.";
+          return null;
+        }
+        return respuesta.json();
+      })
+      .then(function(datos) {
+        if (datos === null) {
+          return;
+        }
+        mensaje.innerHTML = "";
+        mostrarResultados(datos.results);
+        mostrarPaginacion(datos.info);
+      })
+      .catch(function(error) {
+        mensaje.innerHTML = "Ocurrió un error al cargar los datos.";
+        console.log(error);
+      });
+  }
+
+  // esta función dibuja las tarjetas según el tipo que estemos viendo
+  function mostrarResultados(lista) {
+    const contenedor = document.getElementById("contenedor");
+    contenedor.innerHTML = "";
+
+    for (let i = 0; i < lista.length; i++) {
+      const item = lista[i];
+      const tarjeta = document.createElement("div");
+      tarjeta.className = "tarjeta";
+
+      if (tipoActual === "character") {
+        let claseEstado = "desconocido";
+        if (item.status === "Alive") {
+          claseEstado = "vivo";
+        } else if (item.status === "Dead") {
+          claseEstado = "muerto";
+        }
+
+        tarjeta.innerHTML =
+          '<img src="' + item.image + '" alt="' + item.name + '">' +
+          '<div class="tarjeta-info">' +
+            '<h3>' + item.name + '</h3>' +
+            '<p><b>Especie:</b> ' + item.species + '</p>' +
+            '<p><b>Origen:</b> ' + item.origin.name + '</p>' +
+            '<span class="estado ' + claseEstado + '">' + item.status + '</span>' +
+          '</div>';
+
+      } else if (tipoActual === "location") {
+        tarjeta.innerHTML =
+          '<div class="tarjeta-info">' +
+            '<h3>' + item.name + '</h3>' +
+            '<p><b>Tipo:</b> ' + item.type + '</p>' +
+            '<p><b>Dimensión:</b> ' + item.dimension + '</p>' +
+            '<p><b>Residentes:</b> ' + item.residents.length + '</p>' +
+          '</div>';
+
+      } else if (tipoActual === "episode") {
+        tarjeta.innerHTML =
+          '<div class="tarjeta-info">' +
+            '<h3>' + item.name + '</h3>' +
+            '<p><b>Episodio:</b> ' + item.episode + '</p>' +
+            '<p><b>Fecha:</b> ' + item.air_date + '</p>' +
+            '<p><b>Personajes:</b> ' + item.characters.length + '</p>' +
+          '</div>';
+      }
+
+      contenedor.appendChild(tarjeta);
+    }
+  }
+
+  // esta función dibuja los botones de "Anterior" y "Siguiente"
+  function mostrarPaginacion(info) {
+    const paginacion = document.getElementById("paginacion");
+    paginacion.innerHTML = "";
+
+    const botonAnterior = document.createElement("button");
+    botonAnterior.innerHTML = "← Anterior";
+    if (info.prev === null) {
+      botonAnterior.disabled = true;
+    }
+    botonAnterior.onclick = function() {
+      paginaActual = paginaActual - 1;
+      cargarDatos();
+    };
+
+    const textoPagina = document.createElement("span");
+    textoPagina.innerHTML = " Página " + paginaActual + " de " + info.pages + " ";
+
+    const botonSiguiente = document.createElement("button");
+    botonSiguiente.innerHTML = "Siguiente →";
+    if (info.next === null) {
+      botonSiguiente.disabled = true;
+    }
+    botonSiguiente.onclick = function() {
+      paginaActual = paginaActual + 1;
+      cargarDatos();
+    };
+
+    paginacion.appendChild(botonAnterior);
+    paginacion.appendChild(textoPagina);
+    paginacion.appendChild(botonSiguiente);
+  }
+
+</script>
+
+</body>
+</html>
